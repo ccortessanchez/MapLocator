@@ -124,6 +124,38 @@ class ViewController: UIViewController, UISearchBarDelegate, UITableViewDataSour
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return 2
     }
+    
+    func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
+        return .fullScreen
+    }
+    
+    func presentationController(_ controller: UIPresentationController, viewControllerForAdaptivePresentationStyle style: UIModalPresentationStyle) -> UIViewController? {
+        let navController: UINavigationController = UINavigationController(rootViewController: controller.presentedViewController)
+        controller.presentedViewController.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: UIBarButtonSystemItem.done, target: self, action: #selector(ViewController.done))
+        return navController
+    }
+    
+    func done() {
+        presentedViewController?.dismiss(animated: true, completion: nil)
+        
+        if showPointsOfInterest.isOn {
+            mapView.showsPointsOfInterest = true
+        } else {
+            mapView.showsPointsOfInterest = false
+        }
+        
+        if mapType.selectedSegmentIndex == 0 {
+            mapView.mapType = MKMapType.standard
+        } else if mapType.selectedSegmentIndex == 1 {
+            mapView.mapType = MKMapType.satellite
+        } else if mapType.selectedSegmentIndex == 2 {
+            mapView.mapType = MKMapType.hybrid
+        }
+    }
+    
+    func popoverPresentationControllerDidDismissPopover(_ popoverPresentationController: UIPopoverPresentationController) {
+        done()
+    }
 
 }
 
