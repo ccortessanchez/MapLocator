@@ -31,6 +31,10 @@ class ViewController: UIViewController, UISearchBarDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
+        let coordinate: CLLocationCoordinate2D = CLLocationCoordinate2D(latitude: 34.03, longitude: 118.14)
+        let span = MKCoordinateSpan(latitudeDelta: 100, longitudeDelta: 80)
+        let region = MKCoordinateRegionMake(coordinate, span)
+        self.mapView.setRegion(region, animated: true)
     }
 
     override func didReceiveMemoryWarning() {
