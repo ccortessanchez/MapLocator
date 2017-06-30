@@ -9,10 +9,11 @@
 import UIKit
 import MapKit
 
-class ViewController: UIViewController, UISearchBarDelegate {
+class ViewController: UIViewController, UISearchBarDelegate, UITableViewDataSource, UIPopoverPresentationControllerDelegate {
 
     
     @IBOutlet weak var mapView: MKMapView!
+    @IBOutlet weak var showOptionsBtn: UIBarButtonItem!
     
     // Manages the presentation of the search bar
     var searchController: UISearchController!
@@ -24,9 +25,16 @@ class ViewController: UIViewController, UISearchBarDelegate {
     var localSearch: MKLocalSearch!
     var localSearchResponse: MKLocalSearchResponse!
     var error: NSError!
-    //For pins and annotations placed in the map
+    // For pins and annotations placed in the map
     var pointAnnotation: MKPointAnnotation!
     var pinAnnotationView: MKPinAnnotationView!
+    
+    // Handles the pop up content and embeds a UITableView,
+    // with a segmented control and a switch object to show/hide POI
+    var contentController: UITableViewController!
+    var tableMapOptions: UITableView!
+    var mapType: UISegmentedControl!
+    var showPointsOfInterest: UISwitch!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -35,6 +43,10 @@ class ViewController: UIViewController, UISearchBarDelegate {
         let span = MKCoordinateSpan(latitudeDelta: 100, longitudeDelta: 80)
         let region = MKCoordinateRegionMake(coordinate, span)
         self.mapView.setRegion(region, animated: true)
+        tableMapOptions = UITableView()
+        tableMapOptions.dataSource = self
+        contentController = UITableViewController()
+        contentController.tableView = tableMapOptions
     }
 
     override func didReceiveMemoryWarning() {
@@ -49,8 +61,20 @@ class ViewController: UIViewController, UISearchBarDelegate {
         present(searchController, animated: true, completion: nil)
     }
     
+    
+    @IBAction func showMapOptions(_ sender: Any) {
+        // Setting presentation style -- POP OVER
+        contentController.modalPresentationStyle = UIModalPresentationStyle.popover
+        // popPC object manages the displayed pop over content
+        let popPC: UIPopoverPresentationController = contentController.popoverPresentationController!
+        popPC.barButtonItem = showOptionsBtn
+        popPC.permittedArrowDirections = UIPopoverArrowDirection.any
+        popPC.delegate = self
+        present(contentController, animated: true, completion: nil)
+    }
+    
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        //Dismisses the presented search controller over the search bar
+        // Dismisses the presented search controller over the search bar
         searchBar.resignFirstResponder()
         dismiss(animated: true, completion: nil)
         //If there are any previous annotation views, removes it
@@ -58,7 +82,7 @@ class ViewController: UIViewController, UISearchBarDelegate {
             annotation = self.mapView.annotations[0]
             self.mapView.removeAnnotation(annotation)
         }
-        //Transforms search bar into natural language query in order to look for addresses and points of interest
+        // Transforms search bar into natural language query in order to look for addresses and points of interest
         localSearchRequest = MKLocalSearchRequest()
         localSearchRequest.naturalLanguageQuery = searchBar.text
         localSearch = MKLocalSearch(request: localSearchRequest)
@@ -69,7 +93,7 @@ class ViewController: UIViewController, UISearchBarDelegate {
                 self.present(alertController, animated: true, completion: nil)
                 return
             }
-            //If the API returns a valid coordinate, instantiates a 2D point and draws it
+            // If the API returns a valid coordinate, instantiates a 2D point and draws it
             self.pointAnnotation = MKPointAnnotation()
             self.pointAnnotation.title = searchBar.text
             self.pointAnnotation.coordinate = CLLocationCoordinate2D(latitude: localSearchResponse!.boundingRegion.center.latitude, longitude: localSearchResponse!.boundingRegion.center.longitude)
@@ -78,6 +102,27 @@ class ViewController: UIViewController, UISearchBarDelegate {
             self.mapView.centerCoordinate = self.pointAnnotation.coordinate
             self.mapView.addAnnotation(self.pinAnnotationView.annotation!)
         }
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        var cell: UITableViewCell! = tableView.dequeueReusableCell(withIdentifier: "cellIdentifier")
+        if cell == nil {
+            cell = UITableViewCell(style: UITableViewCellStyle.value1, reuseIdentifier: "cellIdentifier")
+            if indexPath.row == 0 {
+                mapType = UISegmentedControl(items: ["Standard", "Satellite", "Hybrid"])
+                mapType.center = cell.center
+            }
+            if indexPath.row == 1 {
+                showPointsOfInterest = UISwitch()
+                cell.textLabel?.text = "Show Points of Interest"
+                cell.accessoryView = showPointsOfInterest
+            }
+        }
+        return cell
+    }
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return 2
     }
 
 }
