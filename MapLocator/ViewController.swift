@@ -36,6 +36,9 @@ class ViewController: UIViewController, UISearchBarDelegate, UITableViewDataSour
     var mapType: UISegmentedControl!
     var showPointsOfInterest: UISwitch!
     
+    var mapItemData: MKMapItem!
+    
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
@@ -102,6 +105,8 @@ class ViewController: UIViewController, UISearchBarDelegate, UITableViewDataSour
             self.pinAnnotationView = MKPinAnnotationView(annotation: self.pointAnnotation, reuseIdentifier: nil)
             self.mapView.centerCoordinate = self.pointAnnotation.coordinate
             self.mapView.addAnnotation(self.pinAnnotationView.annotation!)
+            
+            self.mapItemData = localSearchResponse?.mapItems.last
         }
     }
     
@@ -163,6 +168,15 @@ class ViewController: UIViewController, UISearchBarDelegate, UITableViewDataSour
         self.pinAnnotationView.canShowCallout = true
         return self.pinAnnotationView
     }
+    
+    func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
+        self.performSegue(withIdentifier: "PinDetails", sender: self)
+    }
 
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        var pinDetailsVC = PinDetailsViewController()
+        pinDetailsVC = segue.destination as! PinDetailsViewController
+        pinDetailsVC.mapItemData = self.mapItemData
+    }
 }
 
