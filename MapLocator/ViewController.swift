@@ -9,7 +9,7 @@
 import UIKit
 import MapKit
 
-class ViewController: UIViewController, UISearchBarDelegate, UITableViewDataSource, UIPopoverPresentationControllerDelegate {
+class ViewController: UIViewController, UISearchBarDelegate, UITableViewDataSource, UIPopoverPresentationControllerDelegate, MKMapViewDelegate {
 
     
     @IBOutlet weak var mapView: MKMapView!
@@ -47,6 +47,7 @@ class ViewController: UIViewController, UISearchBarDelegate, UITableViewDataSour
         tableMapOptions.dataSource = self
         contentController = UITableViewController()
         contentController.tableView = tableMapOptions
+        mapView.delegate = self
     }
 
     override func didReceiveMemoryWarning() {
@@ -155,6 +156,12 @@ class ViewController: UIViewController, UISearchBarDelegate, UITableViewDataSour
     
     func popoverPresentationControllerDidDismissPopover(_ popoverPresentationController: UIPopoverPresentationController) {
         done()
+    }
+    
+    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+        self.pinAnnotationView.rightCalloutAccessoryView = UIButton(type: UIButtonType.infoLight)
+        self.pinAnnotationView.canShowCallout = true
+        return self.pinAnnotationView
     }
 
 }
