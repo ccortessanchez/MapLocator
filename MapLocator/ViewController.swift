@@ -9,10 +9,24 @@
 import UIKit
 import MapKit
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, UISearchBarDelegate {
 
     
     @IBOutlet weak var mapView: MKMapView!
+    
+    // Manages the presentation of the search bar
+    var searchController: UISearchController!
+    // Manages and references any drawn annotation on the map
+    var annotation: MKAnnotation!
+    // In order to search an adress, a localSearchRequest object is passed to localSearch,
+    // and the result is stored in localSearchResponse
+    var localSearchRequest: MKLocalSearchRequest!
+    var localSearch: MKLocalSearch!
+    var localSearchResponse: MKLocalSearchResponse!
+    var error: NSError!
+    //For pins and annotations placed in the map
+    var pointAnnotation: MKPointAnnotation!
+    var pinAnnotationView: MKPinAnnotationView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -25,6 +39,41 @@ class ViewController: UIViewController {
     }
 
     @IBAction func showSearchBar(_ sender: Any) {
+        searchController = UISearchController(searchResultsController: nil)
+        searchController.hidesNavigationBarDuringPresentation = false
+        self.searchController.searchBar.delegate = self
+        present(searchController, animated: true, completion: nil)
+    }
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        //Dismisses the presented search controller over the search bar
+        searchBar.resignFirstResponder()
+        dismiss(animated: true, completion: nil)
+        //If there are any previous annotation views, removes it
+        if self.mapView.annotations.count != 0 {
+            annotation = self.mapView.annotations[0]
+            self.mapView.removeAnnotation(annotation)
+        }
+        //Transforms search bar into natural language query in order to look for addresses and points of interest
+        localSearchRequest = MKLocalSearchRequest()
+        localSearchRequest.naturalLanguageQuery = searchBar.text
+        localSearch = MKLocalSearch(request: localSearchRequest)
+        localSearch.start { (localSearchResponse, error) in
+            if localSearchResponse == nil {
+                let alertController = UIAlertController(title: nil, message: "Place not found", preferredStyle: UIAlertControllerStyle.alert)
+                alertController.addAction(UIAlertAction(title: "Dismiss", style: UIAlertActionStyle.default, handler: nil))
+                self.present(alertController, animated: true, completion: nil)
+                return
+            }
+            //If the API returns a valid coordinate, instantiates a 2D point and draws it
+            self.pointAnnotation = MKPointAnnotation()
+            self.pointAnnotation.title = searchBar.text
+            self.pointAnnotation.coordinate = CLLocationCoordinate2D(latitude: localSearchResponse!.boundingRegion.center.latitude, longitude: localSearchResponse!.boundingRegion.center.longitude)
+            
+            self.pinAnnotationView = MKPinAnnotationView(annotation: self.pointAnnotation, reuseIdentifier: nil)
+            self.mapView.centerCoordinate = self.pointAnnotation.coordinate
+            self.mapView.addAnnotation(self.pinAnnotationView.annotation!)
+        }
     }
 
 }
